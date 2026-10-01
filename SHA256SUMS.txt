@@ -1,18 +1,25 @@
-# Security policy
-
-## Reporting a vulnerability
-
-Do not publish migration captures, repair plans, registry snapshots, credentials, or personally identifying diagnostics in a public issue. Report security defects privately to the repository maintainer and include the smallest sanitized reproduction possible.
-
-## Operator responsibilities
-
-- Run only a package that passes checksum and parser validation.
-- Review every approved repair action and keep the default-deny plan behavior.
-- Protect captures and backups with access controls and encrypted storage.
-- Never commit generated captures, reports, `.hiv` snapshots, or repair backups.
-- Never disable endpoint protection merely to capture protected runtime databases.
-- Never restore broad registry snapshots wholesale onto another computer.
-
-## Support window
-
-Security fixes are expected for the latest published major release. No automated update mechanism is included.
+d22605ebe18a2acbad1c7d3643a4ed65ca5ff8f75229ec100ebbea4569dbd7a6  .github\workflows\validate.yml
+f2aa31d5b3127ea2f260742dad568d9e462e374cbddd6c978f16efdd32667329  .gitignore
+b6e23a0c5dba07feb43b6cddbef115737d2ae5074f7de47b2176ebb7413d12c5  CAPABILITIES-AND-LIMITATIONS.md
+786830d0bb7e616c5a7343c9e8910150ea9719f9661b36555ccd69bc00095b1b  CHANGELOG.md
+e9a70c2684f6fedf422a3233e49fbc8b00319686ce749ccab7ac1aa31d3f478a  Capture-PCMigrationState-v4.1.0.ps1
+1865d40d417ef7bf41ee1241a73bc02b329419daa4448ce590b07fa7fe0f6b61  Capture-StartMenu-v4.1.0.ps1
+66a87aadd0383f461f3e188d544cef2cb693dc615f688985ca0638771f7c1ce9  Compare-PCMigrationState-v4.1.0.ps1
+e4f37acd48086d92b9ddbaae415ae9569a5a3586e73b242a112a1b5c3e92461c  Diagnose-Build-StartLayout-v4.1.0.ps1
+046520c8c239fb6c96ff39525e725663edad9930c78d8eb5506eca97a7010f21  GITHUB-PUBLISHING.md
+0f84c2f31f64328d12329a486c776c4ff2e79dbd7489fec3f9002e35b58412ba  Invoke-PCMigrationRepair-v4.1.0.ps1
+16d29583ef488c85e2a24aefda36fe9fbeea8ab64b2b27fb4e398726dd52bf6a  LICENSE
+70569021120ab15a8b5ce962ae0f09d781f3cb8abef739dd7652ed8354395846  OMISSION-AUDIT.md
+0d8da4a937809af50f1f2a1b99c28988032ace59287947d5e30ef94ef8b0ae41  PCMigration.Common-v4.1.0.ps1
+22427727d935d92c0d6812c94956593ee8ecf706d985f50b88a120d465e0cf0b  README.md
+7c505a55789fed5b77169f03cfeb9a0a152a06434ff94d88829d158f1fa4d444  RegistryBackup-v4.1.0.ps1
+6414a9ec2ffaca0677ee00e92a320d7862fa003b94ded37c8b837ea1ccf0c405  Restore-StartTileGrid-v4.1.0.ps1
+6dda773bae68aaf03730df9502869996644659357a80c9e1ee7e093c6484f6a2  Rollback-PCMigrationRepair-v4.1.0.ps1
+dd369357b71738e8c97cd1cc1ba6c270d4f9ea3148ecef438288af2f57fc97a5  SECURITY.md
+013576afc3e441d18738dbc82b4fa98cc33f1a8cfad88f314494e53f124bbb91  START-MENU.md
+9ab1342a79e8a9ba6c1990f088f220692c9001fdf42ff2ac1961b9145a7d4ba7  StartMenu.Common-v4.1.0.ps1
+839d108edad9cc1c3f54fa2870560b3fe822975e50df3e683b6d734a1a6790c4  Test-PCMigrationPackage-v4.1.0.ps1
+1b576c545a0924b7e0b5991456aa7b921fedefa392aba010223f37015bac2a12  VALIDATION.md
+800e701b6d6e4c777c1cb5b9e5b6fa38b784ce6b27c8d5d07edbeead40e75006  Verify-PCMigrationState-v4.1.0.ps1
+5f9f3c492a18f30e15fc2c87c3ee5a2d9b580642143afcc8c5ef84d28b94b9a9  docs\PCMigration-Reconciliation-v4.1.0-Guide.pdf
+25d29e3d505b59dc6682540cc4cbf24de2c1cf089cbf077a755323093af00010  tests\Test-StartMenuLogic.ps1

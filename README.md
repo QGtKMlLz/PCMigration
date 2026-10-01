@@ -1,4 +1,4 @@
-# PCMigration Reconciliation v4.0.0
+# PCMigration Reconciliation v4.1.0
 
 PCMigration Reconciliation is a conservative Windows migration auditing and selective-repair toolkit. It captures independent evidence from a source and destination PC, explains what did not migrate, creates an inert repair plan, applies only individually approved and source-authorized actions, and preserves rollback evidence before mutation.
 
@@ -6,7 +6,9 @@ It is designed for experienced Windows users, administrators, technicians, and m
 
 ## Release summary
 
-Version 4.0.0 consolidates the complete v3.2.1 package, the v3.3 native registry-backup revision, the PowerShell 5.1 HTML hotfix, and the final shortcut/Unicode corrections into one coherent distribution. Captures from older schemas are intentionally not accepted.
+Version 4.1.0 adds the Windows 10 Start-menu workflow omitted from v4.0.0: dual-mode XML capture, encoding-safe diagnostics, optional XML layout policy application, and the explicit tiles-only CloudStore fallback. The core reconciliation schema remains **4.0**: existing v4.0.0 core captures remain usable. Captures from v3.x remain incompatible. Start tiles use a separate capture with schema `StartMenu-1.0`; the tile restore also accepts trusted legacy v2.5.4 Start captures.
+
+The added Start module is an experimental Windows 10 component. It does not restore Windows 11 pins. Read [START-MENU.md](START-MENU.md) before using it; it is deliberately separate from the automatic repair plan.
 
 Most importantly, Windows shortcut files are no longer declared different merely because their opaque `.lnk` binary metadata differs. The comparison now uses normalized launch target, arguments, and working directory. A shortcut already present and functionally equivalent is listed in `Shortcut-Reconciliation.csv`, but is excluded from `Repair-Plan.csv` even if the raw files have different hashes.
 
@@ -14,17 +16,25 @@ Most importantly, Windows shortcut files are no longer declared different merely
 
 | File | Purpose |
 |---|---|
-| `Test-PCMigrationPackage-v4.0.0.ps1` | Parses scripts, verifies every packaged checksum, and runs regression tests. |
-| `Capture-PCMigrationState-v4.0.0.ps1` | Captures applications, settings, registry state, shortcuts, Windows state, integration state, development tools, and manual/secure migration items. |
-| `Compare-PCMigrationState-v4.0.0.ps1` | Validates both captures and generates reconciliation reports plus an inert repair plan. It never changes the destination. |
-| `Invoke-PCMigrationRepair-v4.0.0.ps1` | Previews or applies individually approved, source-authorized repairs and creates backups before mutation. |
-| `Verify-PCMigrationState-v4.0.0.ps1` | Recaptures the destination and repeats the comparison after repair. |
-| `Rollback-PCMigrationRepair-v4.0.0.ps1` | Previews or restores file and narrow registry changes from a repair backup. |
-| `PCMigration.Common-v4.0.0.ps1` | Shared PowerShell 5.1 and .NET implementation. Do not run directly. |
-| `RegistryBackup-v4.0.0.ps1` | Optional native binary registry safety snapshots plus narrow targeted exports. Do not run directly. |
-| `PCMigration-Reconciliation-v4.0.0-Guide.pdf` | Complete operational instructions and review guidance. |
+| `Test-PCMigrationPackage-v4.1.0.ps1` | Parses scripts, verifies every packaged checksum, and runs regression tests. |
+| `Capture-PCMigrationState-v4.1.0.ps1` | Captures applications, settings, registry state, shortcuts, Windows state, integration state, development tools, and manual/secure migration items. |
+| `Compare-PCMigrationState-v4.1.0.ps1` | Validates both captures and generates reconciliation reports plus an inert repair plan. It never changes the destination. |
+| `Invoke-PCMigrationRepair-v4.1.0.ps1` | Previews or applies individually approved, source-authorized repairs and creates backups before mutation. |
+| `Verify-PCMigrationState-v4.1.0.ps1` | Recaptures the destination and repeats the comparison after repair. |
+| `Rollback-PCMigrationRepair-v4.1.0.ps1` | Previews or restores file and narrow registry changes from a repair backup. |
+| `PCMigration.Common-v4.1.0.ps1` | Shared PowerShell 5.1 and .NET implementation. Do not run directly. |
+| `RegistryBackup-v4.1.0.ps1` | Optional native binary registry safety snapshots plus narrow targeted exports. Do not run directly. |
+| `PCMigration-Reconciliation-v4.1.0-Guide.pdf` | Complete operational instructions and review guidance. |
 | `CAPABILITIES-AND-LIMITATIONS.md` | Supported cases, special fixes, exclusions, and limitations. |
-| `SHA256SUMS.txt` | Package integrity manifest. |
+| `Capture-StartMenu-v4.1.0.ps1` | Separate Windows 10 XML and tile-grid capture. |
+| `Diagnose-Build-StartLayout-v4.1.0.ps1` | Read-only tile diagnostics; explicit XML build/policy apply/remove/rollback. |
+| `Restore-StartTileGrid-v4.1.0.ps1` | Preview/apply/rollback of one Windows 10 tile-grid subtree. |
+| `StartMenu.Common-v4.1.0.ps1` | Start-specific validation, encoding, registry scope, and backup helpers. |
+| `START-MENU.md` | Full Start workflow and compatibility requirements. |
+| `VALIDATION.md` | What was checked and what still requires Windows validation. |
+| `tests/Test-StartMenuLogic.ps1` | Registry-scope, XML encoding, and integrity regression tests. |
+| `.github/workflows/validate.yml` | Windows PowerShell 5.1 validation on GitHub push/PR. |
+| `SHA256SUMS.txt` | Unsigned checksum manifest; detects changes, not publisher identity. |
 
 ## Requirements
 
@@ -56,30 +66,32 @@ Run all toolkit scripts from the extracted package directory in elevated 64-bit 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass -Force
 Get-ChildItem -LiteralPath $PWD -Filter '*.ps1' | Unblock-File
-.\Test-PCMigrationPackage-v4.0.0.ps1
+.\Test-PCMigrationPackage-v4.1.0.ps1
 ```
 
 Expected result:
 
 ```text
-Package validation passed: PowerShell parser, SHA256 manifest, and v4.0.0 regression checks.
+Package validation passed: PowerShell parser, SHA256 manifest, and v4.1.0 regression checks.
 ```
 
 Unrelated files are warnings by default. To require an exact package-only directory:
 
 ```powershell
-.\Test-PCMigrationPackage-v4.0.0.ps1 -StrictPackageContents
+.\Test-PCMigrationPackage-v4.1.0.ps1 -StrictPackageContents
 ```
 
 Do not continue if a parser, missing-file, or hash failure is reported.
 
 ## 2. Capture the source PC
 
+For Windows 10 pinned tiles, also run `Capture-StartMenu-v4.1.0.ps1` on the source into a separate new directory while the original layout is still present. Follow `START-MENU.md`. The regular core capture, including `-CaptureRegistrySafetyBackup`, is not a supported tile-restore input.
+
 Close applications whose settings matter. The practical default is:
 
 ```powershell
-.\Capture-PCMigrationState-v4.0.0.ps1 `
-    -OutputPath 'P:\PCMigration-Source-v4.0.0' `
+.\Capture-PCMigrationState-v4.1.0.ps1 `
+    -OutputPath 'P:\PCMigration-Source-v4.1.0' `
     -InventoryMode Standard `
     -CaptureSettingsPayload `
     -SearchSecureFileCandidates `
@@ -95,8 +107,8 @@ If portable applications exist outside the usual locations:
 Optional comprehensive registry safety backup:
 
 ```powershell
-.\Capture-PCMigrationState-v4.0.0.ps1 `
-    -OutputPath 'P:\PCMigration-Source-v4.0.0' `
+.\Capture-PCMigrationState-v4.1.0.ps1 `
+    -OutputPath 'P:\PCMigration-Source-v4.1.0' `
     -InventoryMode Standard `
     -CaptureSettingsPayload `
     -SearchSecureFileCandidates `
@@ -123,7 +135,7 @@ Never guess a service name. Security, Defender, Kaspersky, firewall, networking,
 ## 3. Review the source capture
 
 ```powershell
-Import-Csv 'P:\PCMigration-Source-v4.0.0\Capture-Status.csv' |
+Import-Csv 'P:\PCMigration-Source-v4.1.0\Capture-Status.csv' |
     Format-Table Collector,Status,Records,ElapsedSeconds,Message -AutoSize -Wrap
 ```
 
@@ -132,7 +144,7 @@ Investigate every `Failed` result. A `Partial` collector creates a comparison bl
 Review all captured shortcuts with useful relative locations:
 
 ```powershell
-Import-Csv 'P:\PCMigration-Source-v4.0.0\Applications\Shortcuts.csv' |
+Import-Csv 'P:\PCMigration-Source-v4.1.0\Applications\Shortcuts.csv' |
     Sort-Object RelativeLocation |
     Format-Table RelativeLocation,TargetPath,Arguments,TargetExists -AutoSize -Wrap
 ```
@@ -142,8 +154,8 @@ Import-Csv 'P:\PCMigration-Source-v4.0.0\Applications\Shortcuts.csv' |
 Run as the migrated user, preferably elevated:
 
 ```powershell
-.\Capture-PCMigrationState-v4.0.0.ps1 `
-    -OutputPath 'C:\MigrationAudit\Destination-Before-v4.0.0' `
+.\Capture-PCMigrationState-v4.1.0.ps1 `
+    -OutputPath 'C:\MigrationAudit\Destination-Before-v4.1.0' `
     -InventoryMode Standard `
     -SearchSecureFileCandidates `
     -StartStoppedInventoryServices
@@ -154,16 +166,16 @@ Do not use `-CaptureSettingsPayload` or `-CaptureRegistrySafetyBackup` on the de
 ## 5. Compare source and destination
 
 ```powershell
-.\Compare-PCMigrationState-v4.0.0.ps1 `
-    -SourceCapture 'P:\PCMigration-Source-v4.0.0' `
-    -DestinationCapture 'C:\MigrationAudit\Destination-Before-v4.0.0' `
-    -OutputPath 'C:\MigrationAudit\Reconciliation-Before-v4.0.0'
+.\Compare-PCMigrationState-v4.1.0.ps1 `
+    -SourceCapture 'P:\PCMigration-Source-v4.1.0' `
+    -DestinationCapture 'C:\MigrationAudit\Destination-Before-v4.1.0' `
+    -OutputPath 'C:\MigrationAudit\Reconciliation-Before-v4.1.0'
 ```
 
 Open the HTML summary:
 
 ```powershell
-Start-Process 'C:\MigrationAudit\Reconciliation-Before-v4.0.0\Summary.html'
+Start-Process 'C:\MigrationAudit\Reconciliation-Before-v4.1.0\Summary.html'
 ```
 
 Review in this order:
@@ -184,7 +196,7 @@ Review in this order:
 Show every shortcut and its logical destination result:
 
 ```powershell
-Import-Csv 'C:\MigrationAudit\Reconciliation-Before-v4.0.0\Shortcut-Reconciliation.csv' |
+Import-Csv 'C:\MigrationAudit\Reconciliation-Before-v4.1.0\Shortcut-Reconciliation.csv' |
     Sort-Object FunctionalStatus,RelativeLocation |
     Format-Table RelativeLocation,DestinationPresent,FunctionalStatus,BinaryStatus,Risk,SourceTarget -AutoSize -Wrap
 ```
@@ -192,7 +204,7 @@ Import-Csv 'C:\MigrationAudit\Reconciliation-Before-v4.0.0\Shortcut-Reconciliati
 Show only real functional gaps:
 
 ```powershell
-Import-Csv 'C:\MigrationAudit\Reconciliation-Before-v4.0.0\Shortcut-Gaps.csv' |
+Import-Csv 'C:\MigrationAudit\Reconciliation-Before-v4.1.0\Shortcut-Gaps.csv' |
     Sort-Object RelativeLocation |
     Format-Table RelativeLocation,Status,DestinationPresent,TargetPath,Arguments -AutoSize -Wrap
 ```
@@ -208,16 +220,16 @@ Never copy live credential stores, browser session databases, Keeper sessions, W
 ## 8. Recapture and compare after application installation
 
 ```powershell
-.\Capture-PCMigrationState-v4.0.0.ps1 `
-    -OutputPath 'C:\MigrationAudit\Destination-PostApps-v4.0.0' `
+.\Capture-PCMigrationState-v4.1.0.ps1 `
+    -OutputPath 'C:\MigrationAudit\Destination-PostApps-v4.1.0' `
     -InventoryMode Standard `
     -SearchSecureFileCandidates `
     -StartStoppedInventoryServices
 
-.\Compare-PCMigrationState-v4.0.0.ps1 `
-    -SourceCapture 'P:\PCMigration-Source-v4.0.0' `
-    -DestinationCapture 'C:\MigrationAudit\Destination-PostApps-v4.0.0' `
-    -OutputPath 'C:\MigrationAudit\Reconciliation-PostApps-v4.0.0'
+.\Compare-PCMigrationState-v4.1.0.ps1 `
+    -SourceCapture 'P:\PCMigration-Source-v4.1.0' `
+    -DestinationCapture 'C:\MigrationAudit\Destination-PostApps-v4.1.0' `
+    -OutputPath 'C:\MigrationAudit\Reconciliation-PostApps-v4.1.0'
 ```
 
 Use the new post-application `Shortcut-Reconciliation.csv` and `Repair-Plan.csv`. Do not reuse or merge an earlier plan.
@@ -225,7 +237,7 @@ Use the new post-application `Shortcut-Reconciliation.csv` and `Repair-Plan.csv`
 ## 9. Approve selected actions
 
 ```powershell
-$PlanPath = 'C:\MigrationAudit\Reconciliation-PostApps-v4.0.0\Repair-Plan.csv'
+$PlanPath = 'C:\MigrationAudit\Reconciliation-PostApps-v4.1.0\Repair-Plan.csv'
 $Plan = Import-Csv -LiteralPath $PlanPath
 
 $Plan |
@@ -252,16 +264,16 @@ Edit only the `Approved` column. Do not change method, identity, artifact, desti
 Low/medium current-user actions:
 
 ```powershell
-.\Invoke-PCMigrationRepair-v4.0.0.ps1 `
-    -SourceCapture 'P:\PCMigration-Source-v4.0.0' `
+.\Invoke-PCMigrationRepair-v4.1.0.ps1 `
+    -SourceCapture 'P:\PCMigration-Source-v4.1.0' `
     -PlanPath $PlanPath
 ```
 
 If approved rows include high-risk or administrative actions, preview with the same gates required for application:
 
 ```powershell
-.\Invoke-PCMigrationRepair-v4.0.0.ps1 `
-    -SourceCapture 'P:\PCMigration-Source-v4.0.0' `
+.\Invoke-PCMigrationRepair-v4.1.0.ps1 `
+    -SourceCapture 'P:\PCMigration-Source-v4.1.0' `
     -PlanPath $PlanPath `
     -AllowHighRisk `
     -AllowAdminChanges
@@ -272,8 +284,8 @@ Preview mode makes no destination changes.
 ## 11. Apply the reviewed repair
 
 ```powershell
-.\Invoke-PCMigrationRepair-v4.0.0.ps1 `
-    -SourceCapture 'P:\PCMigration-Source-v4.0.0' `
+.\Invoke-PCMigrationRepair-v4.1.0.ps1 `
+    -SourceCapture 'P:\PCMigration-Source-v4.1.0' `
     -PlanPath $PlanPath `
     -AllowHighRisk `
     -AllowAdminChanges `
@@ -282,17 +294,19 @@ Preview mode makes no destination changes.
 
 The script records the exact backup folder on the destination desktop. Keep it until final verification and a stable operating period are complete.
 
-## 12. Sign out and sign back in
+## 12. Optional Windows 10 Start tiles; then sign out and sign back in
+
+After apps and shortcuts are installed/reconciled, follow `START-MENU.md` to diagnose or restore tiles. Tiles are not listed in `Repair-Plan.csv`. The main verification checks apps/shortcuts/settings; verify tile rendering visually after sign-out/sign-in.
 
 This reloads Explorer, Console Host, regional/clock, font, language, personalization, and shell state. Restart Windows when a feature, capability, installer, or vendor application requires it.
 
 ## 13. Verify
 
 ```powershell
-.\Verify-PCMigrationState-v4.0.0.ps1 `
-    -SourceCapture 'P:\PCMigration-Source-v4.0.0' `
-    -DestinationCapturePath 'C:\MigrationAudit\Destination-After-v4.0.0' `
-    -ReportPath 'C:\MigrationAudit\Reconciliation-After-v4.0.0'
+.\Verify-PCMigrationState-v4.1.0.ps1 `
+    -SourceCapture 'P:\PCMigration-Source-v4.1.0' `
+    -DestinationCapturePath 'C:\MigrationAudit\Destination-After-v4.1.0' `
+    -ReportPath 'C:\MigrationAudit\Reconciliation-After-v4.1.0'
 ```
 
 Review `Summary.html`, `Regression-Checks.csv`, `Capture-Coverage.csv`, `Shortcut-Reconciliation.csv`, `Likely-Migration-Gaps.csv`, and `Manual-Secure-Actions.csv`.
@@ -302,15 +316,15 @@ Review `Summary.html`, `Regression-Checks.csv`, `Capture-Coverage.csv`, `Shortcu
 Preview:
 
 ```powershell
-.\Rollback-PCMigrationRepair-v4.0.0.ps1 `
-    -BackupPath 'C:\Users\USER\Desktop\PCMigration-v4.0.0-Backup-YYYYMMDD-HHMMSS'
+.\Rollback-PCMigrationRepair-v4.1.0.ps1 `
+    -BackupPath 'C:\Users\USER\Desktop\PCMigration-v4.1.0-Backup-YYYYMMDD-HHMMSS'
 ```
 
 Apply:
 
 ```powershell
-.\Rollback-PCMigrationRepair-v4.0.0.ps1 `
-    -BackupPath 'C:\Users\USER\Desktop\PCMigration-v4.0.0-Backup-YYYYMMDD-HHMMSS' `
+.\Rollback-PCMigrationRepair-v4.1.0.ps1 `
+    -BackupPath 'C:\Users\USER\Desktop\PCMigration-v4.1.0-Backup-YYYYMMDD-HHMMSS' `
     -Apply
 ```
 
@@ -318,9 +332,17 @@ To remove registry subtrees that did not exist before repair, add `-RemoveNewReg
 
 ## Unicode and special-path behavior
 
-All package text, CSV, and JSON outputs use Unicode-safe APIs and UTF-8. Literal filesystem operations preserve the exact original path. Comparison normalization uses Unicode Form C only; compatibility characters are not collapsed. Therefore the legal Windows filename character `µ` (U+00B5 MICRO SIGN) survives capture, reporting, manifest hashing, payload copy, and repair authorization, while remaining distinct from `μ` (U+03BC GREEK SMALL LETTER MU). The validator contains a regression test for this behavior.
+Package text, CSV, and JSON outputs use Unicode-safe APIs and UTF-8; native registry exports use UTF-16. Start XML is decoded by the XML parser using its declared encoding, including UTF-8 without a BOM. Literal filesystem operations preserve the exact original path. Comparison normalization uses Unicode Form C only; compatibility characters are not collapsed. Therefore the legal Windows filename character `µ` (U+00B5 MICRO SIGN) survives capture, reporting, manifest hashing, payload copy, and repair authorization, while remaining distinct from `μ` (U+03BC GREEK SMALL LETTER MU). The validator contains a regression test for this behavior.
 
 Reparse points are deliberately skipped, parent traversal is rejected, and repair destinations must resolve through an approved root token or shortcut root. The tool does not promise support for every legacy application that mishandles Unicode internally.
+
+## What v4.0.0 omitted
+
+- The separate Start-menu capture and dual XML export workflow from v2.5.4.
+- Its XML diagnosis/build/policy application path, including the encoding-specific `µ` correction.
+- The v2.5.6.1 tile-grid-only CloudStore fallback and its independent rollback path.
+
+Version 4.1.0 consolidates those Start capabilities with revised scope checks, preview gates, and policy backups. It does not transplant `systempartitionindex` or the whole CloudStore hive. Full firewall policy import, taskbar-pin transplantation, and generic illegal-path repair are still outside this toolkit. Its Unicode handling preserves valid Unicode names; it does not make genuinely invalid Windows paths valid.
 
 ## Important limitations
 

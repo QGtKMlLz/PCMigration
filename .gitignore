@@ -17,3 +17,23 @@ PCMigration-*-Backup-*/
 *.log
 Thumbs.db
 Desktop.ini
+
+# Start captures/reports and release-local artifacts
+PCMigration-StartMenu*/
+StartReports*/
+StartMenu-Source*/
+StartMenu-Destination*/
+PCMigration-StartPolicy-Backup*/
+PCMigration-StartTileGrid-Backup*/
+StartLayout-*.xml
+CloudStore/
+StartMenu/
+Capture-Status.csv
+Meta.json
+BackupMeta.json
+StartPolicy.json
+*.reg
+*.wfw
+release/
+tmp/
+__pycache__/
