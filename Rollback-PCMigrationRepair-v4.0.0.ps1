@@ -1,6 +1,6 @@
 ﻿#requires -version 5.1
 <#
-PCMigration Registry Safety Backup v4.1.0
+PCMigration Registry Safety Backup v4.0.0
 =========================================
 Purpose
 -------
@@ -14,7 +14,7 @@ Design:
   * Sequential native saves; do not parallelize them.
   * PowerShell 5.1 compatible; no external modules; no temp files.
 
-This file is dot-sourced by Capture-PCMigrationState-v4.1.0.ps1. The snapshot
+This file is dot-sourced by Capture-PCMigrationState-v4.0.0.ps1. The snapshot
 stage runs only when -CaptureRegistrySafetyBackup is explicitly supplied.
 
 SECURITY / RESTORE RULE
@@ -257,7 +257,7 @@ function Invoke-PCMigrationRegistryBackup {
 
     $policy = [pscustomobject][ordered]@{
         SchemaVersion              = '4.0'
-        ToolVersion                = '4.1.0'
+        ToolVersion                = '4.0.0'
         CapturedAt                 = (Get-Date).ToString('o')
         BinarySnapshotPolicy       = 'FORENSIC_ONLY_SELECTIVE_EXTRACTION'
         BroadAutomaticRestore      = $false

@@ -63,13 +63,8 @@ foreach($file in @(Get-ChildItem -LiteralPath $root -File -Recurse -Force -Error
     }
 }
 
-if($failures.Count){
-    $failures|ForEach-Object {Write-Host $_ -ForegroundColor Red}
-    throw "Package validation failed with $($failures.Count) error(s). Regression code was not executed."
-}
-
 try{
-    . (Join-Path $root 'PCMigration.Common-v4.1.0.ps1')
+    . (Join-Path $root 'PCMigration.Common-v4.0.0.ps1')
     $present=$true
     $singleRows=@()
     if($present){$singleRows=@([pscustomobject]@{Key='';Name='OnlyValue';Kind='String';DataSHA256='test'})}
@@ -79,7 +74,7 @@ try{
     $trigger=[pscustomobject]@{StartBoundary='2026-01-01T00:00:00';Enabled=$true}
     $triggerType=Get-PCScheduledTaskTriggerType -Trigger $trigger
     if(-not $triggerType){[void]$failures.Add('Regression: scheduled-task trigger without CimClass has no safe type fallback.')}
-    $commonPath=Join-Path $root 'PCMigration.Common-v4.1.0.ps1'
+    $commonPath=Join-Path $root 'PCMigration.Common-v4.0.0.ps1'
     $expectedHash=(Get-FileHash -LiteralPath $commonPath -Algorithm SHA256).Hash.ToLowerInvariant()
     $sharedReadHash=Get-PCSha256File -Path $commonPath -ThrowOnFailure
     if($sharedReadHash -ne $expectedHash){[void]$failures.Add('Regression: shared-read SHA256 hashing returned an incorrect digest.')}
@@ -107,8 +102,7 @@ try{
     $shortcutC=Get-PCShortcutSemanticDigest -Extension '.lnk' -TargetPath '%PROGRAMFILES%\Vendor\App.exe' -Arguments '--mode changed' -WorkingDirectory '%PROGRAMFILES%\Vendor'
     if($shortcutA -ne $shortcutB){[void]$failures.Add('Regression: equivalent Windows shortcut paths produced different semantic digests.')}
     if($shortcutA -eq $shortcutC){[void]$failures.Add('Regression: different shortcut arguments produced the same semantic digest.')}
-    & (Join-Path $root 'tests\Test-StartMenuLogic.ps1') -PackagePath $root
-    . (Join-Path $root 'RegistryBackup-v4.1.0.ps1')
+    . (Join-Path $root 'RegistryBackup-v4.0.0.ps1')
     if(-not (Get-Command Invoke-PCMigrationRegistryBackup -ErrorAction SilentlyContinue)){
         [void]$failures.Add('Regression: integrated registry safety-backup function is unavailable.')
     }
@@ -121,4 +115,4 @@ if($failures.Count){
     throw "Package validation failed with $($failures.Count) error(s)."
 }
 if($warnings.Count){$warnings|ForEach-Object {Write-Warning $_}}
-Write-Host 'Package validation passed: PowerShell parser, SHA256 manifest, and v4.1.0 regression checks.' -ForegroundColor Green
+Write-Host 'Package validation passed: PowerShell parser, SHA256 manifest, and v4.0.0 regression checks.' -ForegroundColor Green
