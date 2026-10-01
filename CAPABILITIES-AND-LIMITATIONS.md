@@ -17,7 +17,7 @@
 - Development state: installed tools, Git configuration evidence, WSL distribution inventory with legacy syntax fallback, and VS Code extensions.
 - Secure/manual state: certificate/private-key warnings, authentication vaults, browser sessions, licenses, EFS/BitLocker/SSH/GPG/VPN/code-signing keys, and user-selected secure-file candidates.
 
-## Special fixes consolidated in v4.0.0
+## Special fixes consolidated in v4.1.0
 
 1. Shortcut semantic reconciliation: `.lnk` files are compared by launch target, arguments, and working directory. Binary-only changes no longer create repair actions.
 2. Human-readable shortcut locations: capture and comparison outputs include paths such as `Start Menu (all users)\Programs\Vendor\Tool.lnk`.
@@ -50,7 +50,7 @@
 
 ## Operational limitations
 
-- Old capture schemas are incompatible with v4.0.0; capture both machines again.
+- Core capture schema 4.0 is retained: v4.0.0 core captures remain compatible. Pre-v4 core captures are incompatible.
 - Destination inventory depth must be at least as deep as source inventory depth.
 - Incomplete collectors create `Unknown` coverage; they do not prove absence.
 - Reparse points are skipped to avoid loops and unintended volumes.
@@ -62,3 +62,18 @@
 ## Security and privacy
 
 Treat every capture, report, repair plan, backup directory, and especially every `.hiv` snapshot as sensitive. Use BitLocker or equivalently protected storage, restrict ACLs, do not commit captures to Git, and securely retire them after verification. The included `.gitignore` excludes typical generated folders, but it is not a substitute for reviewing staged content.
+
+## Windows 10 Start module added in v4.1.0
+
+- Separate capture of both XML export modes, Get-StartApps identities, `.lnk`/`.url` shortcut trees, and narrowly selected curated tile-grid exports.
+- XML decoding respects the file encoding: BOM-less UTF-8 preserves `µ` instead of producing `Âµ`.
+- Readable relative shortcut locations, remapping of recorded source-user roots, and diagnostics for links versus application IDs.
+- XML build changes only the output document. It does not copy shortcuts; reviewed shortcut repair remains in the core toolkit.
+- XML application is preview-only without `-Apply`, uses three current-user policy values, and keeps a policy backup. It locks the layout until policy is removed. Policy rollback is not tile-grid rollback.
+- Explicit binary tile-grid fallback retains the destination key identity and validates every registry header. It changes only one curated Start tile-grid subtree and three current-user Start policy values.
+- Existing source/destination key identities may match. Header mapping does not rewrite value data.
+- Shell stopping is confined to the current session; apply failures attempt to restore the grid and policy; Explorer restart and temporary-file cleanup run in `finally`.
+- New captures/backups have checksums; a trusted legacy v2.5.4 Start capture remains accepted with a warning. Checksums are not digital signatures.
+- The module is experimental, for Windows 10 clients only, with matching build numbers by default. Windows 11 pins, Start taskbar pins, CloudStore `systempartitionindex`, and unrelated CloudStore settings are excluded.
+- Immediate registry verification cannot prove that every tile will render or launch. Install applications first and verify after sign-out/in.
+- Managed policy or Windows edition restrictions may prevent XML application. The toolkit does not bypass organization policy.
